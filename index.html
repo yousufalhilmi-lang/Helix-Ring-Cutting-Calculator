@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حاسبة قص حلقات الحلزون</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            padding: 20px;
+            direction: rtl;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 { text-align: center; color: #2563eb; font-size: 22px; margin-bottom: 25px; font-weight: bold; }
+        .input-group { margin-bottom: 15px; display: flex; flex-direction: column; }
+        label { font-weight: bold; margin-bottom: 5px; font-size: 14px; }
+        input { padding: 12px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 16px; outline: none; }
+        input:focus { border-color: #2563eb; }
+        
+        .btn-submit {
+            width: 100%; background-color: #2563eb; color: white; padding: 14px;
+            border: none; border-radius: 8px; font-size: 16px; font-weight: bold;
+            cursor: pointer; margin-top: 10px;
+        }
+        .btn-submit:hover { background-color: #1e40af; }
+        
+        .results {
+            margin-top: 20px; padding: 15px; background-color: #f1f5f9;
+            border-right: 5px solid #2563eb; border-radius: 6px; display: none;
+        }
+        .result-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e2e8f0; font-size: 16px; }
+        .result-item:last-child { border-bottom: none; }
+        .value { font-weight: bold; color: #2563eb; font-size: 18px; }
+        .note { font-size: 13px; color: #b45309; font-weight: bold; text-align: center; margin-top: 12px; line-height: 1.4; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>📐 حاسبة قص حلقات الحلزون</h1>
+    
+    <div class="input-group">
+        <label>1. القطر الداخلي للغلاف (سم) [اتركه 0 إذا لم يوجد غلاف]:</label>
+        <input type="number" id="casingID" value="20.0" step="0.1">
+    </div>
+
+    <div class="input-group">
+        <label>2. القطر الخارجي للحلزون المطلوب مباشرة (سم) [يُستخدم إذا كان الغلاف = 0]:</label>
+        <input type="number" id="directD" value="19.6" step="0.1">
+    </div>
+
+    <div class="input-group">
+        <label>3. قطر الماسورة الداخلية / العمود (d) سم:</label>
+        <input type="number" id="innerD" value="6.0" step="0.1">
+    </div>
+    
+    <div class="input-group">
+        <label>4. الخطوة المرادة بين الريش (P) سم:</label>
+        <input type="number" id="pitch" value="15.0" step="0.1">
+    </div>
+
+    <button type="button" class="btn-submit" onclick="calculateSpecs()">احسب أبعاد القص فوراً</button>
+
+    <div class="results" id="resultsBox">
+        <div class="result-item" style="background-color: #eff6ff; padding: 8px; border-radius: 4px;">
+            <span>القطر الخارجي المستهدف للحلزون:</span>
+            <span class="value" id="resTargetD">0</span>
+        </div>
+        <div class="result-item">
+            <span>عرض صاج الحلقة للقص (H):</span>
+            <span class="value" id="resWidth">0</span>
+        </div>
+        <div class="result-item">
+            <span>قطر القص الداخلي الصافي للبرجل (Blank ID):</span>
+            <span class="value" id="resID">0</span>
+        </div>
+        <div class="result-item">
+            <span>قطر القص الخارجي الصافي للبرجل (Blank OD):</span>
+            <span class="value" id="resOD">0</span>
+        </div>
+        <div class="note">
+            💡 المقاسات تظهر برقم واحد بعد الفاصلة لتطابق شرطات المازورة تماماً.<br>
+            ✅ تم تطبيق خصم التمدد الميداني (7 ملم) تلقائياً من الأقطار الصافية.
+        </div>
+    </div>
+</div>
+
+<script>
+    function calculateSpecs() {
+        var casingID = parseFloat(document.getElementById('casingID').value) || 0;
+        var directD = parseFloat(document.getElementById('directD').value) || 0;
+        var d = parseFloat(document.getElementById('innerD').value);
+        var P = parseFloat(document.getElementById('pitch').value);
+        
+        var fixedCorrectionCm = 0.7; // خصم التمدد 7 ملم
+        var clearanceCm = 0.4; // خلوص الغلاف 4 ملم
+
+        var D = casingID > 0 ? (casingID - clearanceCm) : directD;
+
+        if (isNaN(d) || isNaN(P) || isNaN(D) || D <= 0 || P <= 0) {
+            alert("الرجاء إدخال أرقام صحيحة وصالحة للحساب");
+            return;
+        }
+        if (d >= D) {
+            alert("خطأ: قطر الماسورة يجب أن يكون أصغر من قطر الحلزون المطلوب!");
+            return;
+        }
+
+        var H = (D - d) / 2;
+
+        var Li = Math.sqrt(Math.pow(Math.PI * d, 2) + Math.pow(P, 2));
+        var Lo = Math.sqrt(Math.pow(Math.PI * D, 2) + Math.pow(P, 2));
+        var ri = (Li * H) / (Lo - Li);
+        var ro = ri + H;
+
+        var blankID = (ri * 2) - fixedCorrectionCm;
+        var blankOD = (ro * 2) - fixedCorrectionCm;
+
+        if (blankID < 0) blankID = 0;
+        if (blankOD < 0) blankOD = 0;
+
+        document.getElementById('resTargetD').innerText = D.toFixed(1) + " سم";
+        document.getElementById('resWidth').innerText = H.toFixed(1) + " سم";
+        document.getElementById('resID').innerText = blankID.toFixed(1) + " سم";
+        document.getElementById('resOD').innerText = blankOD.toFixed(1) + " سم";
+        
+        document.getElementById('resultsBox').style.display = 'block';
+    }
+</script>
+</body>
+</html>
